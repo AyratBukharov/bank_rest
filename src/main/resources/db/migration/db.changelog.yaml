@@ -1,0 +1,212 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create
+      author: ayratbukharov
+      changes:
+        - createTable:
+            tableName: app_user
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: email, type: VARCHAR(255), constraints: { nullable: false, unique: true } }
+              - column: { name: full_name, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: password, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: role, type: VARCHAR(16), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: CURRENT_TIMESTAMP, constraints: { nullable: false } }
+
+        - createTable:
+            tableName: card
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: number, type: VARCHAR(32), constraints: { nullable: false, unique: true } }
+              - column: { name: owner_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: expires_at, type: DATE, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(16), constraints: { nullable: false } }
+              - column: { name: balance, type: NUMERIC(19), defaultValueNumeric: 0.00, constraints: { nullable: false } }
+              - column: { name: version, type: INT, defaultValueNumeric: 0, constraints: { nullable: false } }
+
+        - addForeignKeyConstraint:
+            constraintName: fk_card_owner
+            baseTableName: card
+            baseColumnNames: owner_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        - createTable:
+            tableName: transfer
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: from_card_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: to_card_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: amount, type: NUMERIC(19), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: CURRENT_TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(16), constraints: { nullable: false } }
+
+        - addForeignKeyConstraint:
+            constraintName: fk_transfer_from_card
+            baseTableName: transfer
+            baseColumnNames: from_card_id
+            referencedTableName: card
+            referencedColumnNames: id
+            onDelete: RESTRICT
+
+        - addForeignKeyConstraint:
+            constraintName: fk_transfer_to_card
+            baseTableName: transfer
+            baseColumnNames: to_card_id
+            referencedTableName: card
+            referencedColumnNames: id
+            onDelete: RESTRICT
+
+  - changeSet:
+      id: 2-seed
+      author: ayratbukharov
+      changes:
+        - insert:
+            tableName: app_user
+            columns:
+              - column: { name: id, value: "b1f7565d-cc5c-4cc4-b5b2-0a8b707b5a00" }
+              - column: { name: email, value: "ivanov@example.com" }
+              - column: { name: full_name, value: "Иван Иванов" }
+              - column: { name: password, value: "$2a$10$XGBKTylHR34etpKDMfiGRewaPxjAhe95qphaQROUWKwFmBRnLSaDW" }
+              - column: { name: role, value: "USER" }
+              - column: { name: created_at, valueDate: "2025-10-20T01:41:01" }
+
+        - insert:
+            tableName: app_user
+            columns:
+              - column: { name: id, value: "2a86a710-1b3e-4ae5-8d30-9a0fdb58bb01" }
+              - column: { name: email, value: "markov@example.com" }
+              - column: { name: full_name, value: "Марк Марков" }
+              - column: { name: password, value: "$2a$10$XGBKTylHR34etpKDMfiGRewaPxjAhe95qphaQROUWKwFmBRnLSaDW" }
+              - column: { name: role, value: "USER" }
+              - column: { name: created_at, valueDate: "2025-10-20T01:41:01" }
+
+        - insert:
+            tableName: app_user
+            columns:
+              - column: { name: id, value: "ca1cef2d-3b1e-4968-bb55-8eba9b65a196" }
+              - column: { name: email, value: "admin1@example.com" }
+              - column: { name: full_name, value: "Алексей Алексеев" }
+              - column: { name: password, value: "$2a$10$XGBKTylHR34etpKDMfiGRewaPxjAhe95qphaQROUWKwFmBRnLSaDW" }
+              - column: { name: role, value: "ADMIN" }
+              - column: { name: created_at, valueDate: "2025-10-20T01:41:01" }
+
+        - insert:
+            tableName: app_user
+            columns:
+              - column: { name: id, value: "009e1e09-6294-4d43-9700-26414c2532af" }
+              - column: { name: email, value: "admin2@example.com" }
+              - column: { name: full_name, value: "Максим Максимов" }
+              - column: { name: password, value: "$2a$10$XGBKTylHR34etpKDMfiGRewaPxjAhe95qphaQROUWKwFmBRnLSaDW" }
+              - column: { name: role, value: "ADMIN" }
+              - column: { name: created_at, valueDate: "2025-10-20T01:41:01" }
+
+        - insert:
+            tableName: app_user
+            columns:
+              - column: { name: id, value: "b1f7565d-cc5c-4cc4-b5b2-0a8b707b5a11" }
+              - column: { name: email, value: "petrov@example.com" }
+              - column: { name: full_name, value: "Пётр Петров" }
+              - column: { name: password, value: "$2a$10$XGBKTylHR34etpKDMfiGRewaPxjAhe95qphaQROUWKwFmBRnLSaDW" }
+              - column: { name: role, value: "USER" }
+              - column: { name: created_at, valueDate: "2025-10-20T01:41:01" }
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000001" }
+              - column: { name: number, value: "4000 1111 2222 3333" }
+              - column: { name: owner_id, value: "b1f7565d-cc5c-4cc4-b5b2-0a8b707b5a00" } # Иванов
+              - column: { name: expires_at, valueDate: "2028-12-31" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 5000.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000002" }
+              - column: { name: number, value: "4000 4444 5555 6666" }
+              - column: { name: owner_id, value: "b1f7565d-cc5c-4cc4-b5b2-0a8b707b5a00" }
+              - column: { name: expires_at, valueDate: "2024-10-01" }
+              - column: { name: status, value: "EXPIRED" }
+              - column: { name: balance, valueNumeric: 1200.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "20000000-0000-0000-0000-000000000001" }
+              - column: { name: number, value: "4111 2222 3333 4444" }
+              - column: { name: owner_id, value: "2a86a710-1b3e-4ae5-8d30-9a0fdb58bb01" } # Марков
+              - column: { name: expires_at, valueDate: "2027-09-15" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 8000.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "20000000-0000-0000-0000-000000000002" }
+              - column: { name: number, value: "4111 5555 6666 7777" }
+              - column: { name: owner_id, value: "2a86a710-1b3e-4ae5-8d30-9a0fdb58bb01" }
+              - column: { name: expires_at, valueDate: "2026-05-01" }
+              - column: { name: status, value: "BLOCKED" }
+              - column: { name: balance, valueNumeric: 3500.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "30000000-0000-0000-0000-000000000001" }
+              - column: { name: number, value: "4222 1111 9999 8888" }
+              - column: { name: owner_id, value: "ca1cef2d-3b1e-4968-bb55-8eba9b65a196" } # Алексей (админ)
+              - column: { name: expires_at, valueDate: "2030-01-01" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 15000.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "30000000-0000-0000-0000-000000000002" }
+              - column: { name: number, value: "4222 3333 4444 5555" }
+              - column: { name: owner_id, value: "ca1cef2d-3b1e-4968-bb55-8eba9b65a196" }
+              - column: { name: expires_at, valueDate: "2025-05-01" }
+              - column: { name: status, value: "BLOCKED" }
+              - column: { name: balance, valueNumeric: 600.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "40000000-0000-0000-0000-000000000001" }
+              - column: { name: number, value: "4333 1111 2222 3333" }
+              - column: { name: owner_id, value: "009e1e09-6294-4d43-9700-26414c2532af" } # Максим (админ)
+              - column: { name: expires_at, valueDate: "2029-12-31" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 9000.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "40000000-0000-0000-0000-000000000002" }
+              - column: { name: number, value: "4333 4444 5555 6666" }
+              - column: { name: owner_id, value: "009e1e09-6294-4d43-9700-26414c2532af" }
+              - column: { name: expires_at, valueDate: "2023-10-10" }
+              - column: { name: status, value: "EXPIRED" }
+              - column: { name: balance, valueNumeric: 100.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "50000000-0000-0000-0000-000000000001" }
+              - column: { name: number, value: "4444 1111 2222 3333" }
+              - column: { name: owner_id, value: "b1f7565d-cc5c-4cc4-b5b2-0a8b707b5a11" } # Петров
+              - column: { name: expires_at, valueDate: "2028-08-08" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 7500.00 }
+
+        - insert:
+            tableName: card
+            columns:
+              - column: { name: id, value: "50000000-0000-0000-0000-000000000002" }
+              - column: { name: number, value: "4444 7777 8888 9999" }
+              - column: { name: owner_id, value: "b1f7565d-cc5c-4cc4-b5b2-0a8b707b5a11" }
+              - column: { name: expires_at, valueDate: "2025-01-01" }
+              - column: { name: status, value: "BLOCKED" }
+              - column: { name: balance, valueNumeric: 4200.00 }

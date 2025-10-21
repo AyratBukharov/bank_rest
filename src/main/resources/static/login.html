@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Вход — Bank Cards</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; line-height:1.4; }
+        h1 { font-size: 1.6rem; }
+        form { margin-top: 12px; display:grid; gap:10px; }
+        label { display:flex; flex-direction:column; font-size:0.95rem; }
+        input[type="email"], input[type="password"] { padding:8px; font-size:1rem; width:100%; box-sizing:border-box; }
+        button { padding:10px 14px; font-size:1rem; cursor:pointer; }
+        .info { margin-top:12px; padding:10px; background:#f5f5f5; border-radius:6px; }
+        pre { background:#222; color:#bfffbf; padding:10px; border-radius:6px; overflow:auto; }
+    </style>
+</head>
+<body>
+<h1>Вход в учётную запись (Bank Cards)</h1>
+
+<form id="loginForm">
+    <label>
+        Email
+        <input id="email" type="email" required placeholder="user@example.com" value="admin1@example.com" />
+    </label>
+
+    <label>
+        Пароль
+        <input id="password" type="password" required placeholder="12345" value="12345" />
+    </label>
+
+    <div style="display:flex; gap:8px;">
+        <button id="loginBtn" type="submit">Войти</button>
+        <button id="clearBtn" type="button">Очистить</button>
+    </div>
+</form>
+
+<div class="info">
+    <strong>Результат:</strong>
+    <div id="result">Токен будет показан здесь после успешного логина.</div>
+</div>
+
+<div style="margin-top:12px; display:flex; gap:8px;">
+    <button id="copyBtn" type="button">Копировать токен</button>
+    <button id="openSwagger" type="button">Открыть Swagger UI</button>
+    <button id="showHelp" type="button">Как использовать в Swagger?</button>
+</div>
+
+<pre id="tokenBlock" style="display:none; margin-top:12px;"></pre>
+
+<script>
+    const loginForm = document.getElementById('loginForm');
+    const result = document.getElementById('result');
+    const tokenBlock = document.getElementById('tokenBlock');
+    const copyBtn = document.getElementById('copyBtn');
+    const openSwagger = document.getElementById('openSwagger');
+    const clearBtn = document.getElementById('clearBtn');
+    const showHelp = document.getElementById('showHelp');
+
+    const TOKEN_KEY = 'bankcards.jwt';
+
+    function showToken(token) {
+        tokenBlock.style.display = 'block';
+        tokenBlock.textContent = token;
+        result.innerHTML = '<strong>Успешно!</strong> Токен сохранён в localStorage. Можно скопировать или открыть Swagger.';
+        localStorage.setItem(TOKEN_KEY, token);
+        navigator.clipboard?.writeText(token).then(()=> {
+            result.innerHTML += ' (скопировано в буфер обмена)';
+        }).catch(()=>{});
+    }
+
+    function showError(msg) {
+        tokenBlock.style.display = 'none';
+        result.innerHTML = '<span style="color:crimson"><strong>Ошибка:</strong> '+msg+'</span>';
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        result.textContent = 'Выполняется запрос...';
+
+        try {
+            const resp = await fetch('/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await resp.json().catch(()=>null);
+
+            if (resp.ok && data && data.token) {
+                showToken(data.token);
+            } else {
+                const err = data?.error || (data?.message) || ('HTTP ' + resp.status);
+                showError(err);
+            }
+        } catch (ex) {
+            showError('Сетевая ошибка: ' + ex.message);
+        }
+    });
+
+    copyBtn.addEventListener('click', () => {
+        const tok = localStorage.getItem(TOKEN_KEY) || tokenBlock.textContent;
+        if (!tok) { result.innerHTML = 'Токен не найден. Выполните логин.'; return; }
+        navigator.clipboard.writeText(tok).then(()=> {
+            result.innerHTML = 'Токен скопирован в буфер обмена.';
+        }).catch(()=> {
+            result.innerHTML = 'Не удалось скопировать — откройте консоль/скопируйте вручную.';
+        });
+    });
+
+    openSwagger.addEventListener('click', () => {
+        window.open('/swagger-ui.html', '_blank');
+    });
+
+    clearBtn.addEventListener('click', () => {
+        localStorage.removeItem(TOKEN_KEY);
+        tokenBlock.style.display = 'none';
+        result.textContent = 'Очищено';
+    });
+
+    showHelp.addEventListener('click', () => {
+        alert('Как подставить токен в Swagger:\\n\\n1) Нажмите Authorize (вверху Swagger).\\n2) В поле введите: Bearer <скопированный_токен>\\n   например: Bearer eyJhbGciOiJIUzI1Ni...\\n3) Нажмите Authorize.\\n\\nЕсли хотите — скопируйте токен с этой страницы и вставьте его вручную.');
+    });
+
+    (() => {
+        const tok = localStorage.getItem(TOKEN_KEY);
+        if (tok) {
+            tokenBlock.style.display = 'block';
+            tokenBlock.textContent = tok;
+            result.innerHTML = 'Токен найден в localStorage.';
+        }
+    })();
+</script>
+</body>
+</html>

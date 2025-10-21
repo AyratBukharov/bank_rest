@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bankdb
+    username: bank
+    password: bank
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/migration/db.changelog.yaml
+
+logging:
+  level:
+    ru.bank.cards: INFO
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+jwt:
+  secret: "u8rTn6y5Wl+E4z1ZkF3LQxH6Pd2Q9J4V6Y7bN1Qe3wM="
+  expiration-ms: 86400000
+

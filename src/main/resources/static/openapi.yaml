@@ -1,0 +1,369 @@
+openapi: 3.0.3
+info:
+  title: Bank Cards REST
+  version: 1.1.0
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /api/admin/cards:
+    get:
+      summary: Список карт (админ)
+      parameters:
+        - in: query
+          name: ownerId
+          description: ID пользователя
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          description: Статус карты
+          schema:
+            type: string
+            enum: [ ACTIVE, BLOCKED, EXPIRED, PENDING_BLOCK ]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse_CardResponse'
+
+    post:
+      summary: Создание карты (админ)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCardRequest'
+      responses:
+        '201':
+          description: Карта создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponse'
+
+  /api/admin/cards/pending-block:
+    get:
+      summary: Карты с запросом на блокировку
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse_CardResponse'
+
+  /api/admin/cards/{id}/status:
+    patch:
+      summary: Изменение статуса карты
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCardStatusRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponse'
+
+  /api/admin/cards/{id}:
+    delete:
+      summary: Удаление карты
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Карта удалена
+
+  /api/users/{userId}/cards:
+    get:
+      summary: Список карт пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse_CardResponse'
+
+  /api/users/{userId}/cards/{cardId}:
+    get:
+      summary: Конкретная карта пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: cardId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponse'
+
+  /api/users/{userId}/cards/{cardId}/balance:
+    get:
+      summary: Баланс карты
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: cardId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+
+  /api/users/{userId}/transfers:
+    post:
+      summary: Перевод между своими картами
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '201':
+          description: Выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+
+  /api/users/{userId}/cards/{cardId}/request-block:
+    post:
+      summary: Запросить блокировку карты
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: cardId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponse'
+
+components:
+  schemas:
+    CreateCardRequest:
+      type: object
+      required: [ ownerId, number, expiresAt ]
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+        number:
+          type: string
+        expiresAt:
+          type: string
+          format: date
+        balance:
+          type: number
+          format: double
+          default: 0.0
+
+    UpdateCardStatusRequest:
+      type: object
+      required: [ status ]
+      properties:
+        status:
+          type: string
+          enum: [ ACTIVE, BLOCKED, EXPIRED, PENDING_BLOCK ]
+
+    TransferRequest:
+      type: object
+      required: [ fromCardId, toCardId, amount ]
+      properties:
+        fromCardId:
+          type: string
+          format: uuid
+        toCardId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+
+    CardResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        maskedNumber:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        ownerName:
+          type: string
+        expiresAt:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ ACTIVE, BLOCKED, EXPIRED, PENDING_BLOCK ]
+        balance:
+          type: number
+          format: double
+
+    BalanceResponse:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        maskedNumber:
+          type: string
+        balance:
+          type: number
+          format: double
+
+    TransferResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fromMaskedNumber:
+          type: string
+        toMaskedNumber:
+          type: string
+        amount:
+          type: number
+          format: double
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [ COMPLETED, FAILED ]
+
+    PageResponse_CardResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    CardStatus:
+      type: string
+      enum: [ ACTIVE, BLOCKED, EXPIRED, PENDING_BLOCK ]
+
+    TransferStatus:
+      type: string
+      enum: [ COMPLETED, FAILED ]
+
+    Role:
+      type: string
+      enum: [ USER, ADMIN ]
